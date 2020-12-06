@@ -57,7 +57,7 @@ def SYN_Flood(dstIP, dstPort, counter):
     with open('syns_results_p.txt', 'a') as f:
         f.write(f'\nTotal time - {attack_time}')
         f.write(f'\nAverage time - {avg_time}')
-    print("\nTotal packets sent: {total}\n")
+    print(f"\nTotal packets sent: {total}\n")
 
 
 def info():
@@ -81,7 +81,7 @@ def interactive_mode():
 def main():
     if len(sys.argv) != 4:
         print("Usage: python3.8 ddos.py <IP> <Port> <Amount of Packets>\n")
-    SYN_Flood(sys.argv[1], sys.argv[2], int(sys.argv[3]))
+    SYN_Flood(sys.argv[1], int(sys.argv[2]), int(sys.argv[3]))
 
 
 main()

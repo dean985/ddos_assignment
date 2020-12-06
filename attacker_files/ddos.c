@@ -130,13 +130,17 @@ int main(int argc, char **argv)
 
     // Writing to a file
     FILE *fp;
-    fp = fopen("syns_results_c.txt", "a+");
+    fp = fopen("syns_results_c.txt", "a");
     clock_t total_begin = clock();
 
 
  //Sending one million syn packets
-      for (int i =0 ; i < 100; i++ ){
-        for(int j = 0; j < 10000; j++){ 
+ //int limit1 = 100;
+ //int limit2 = 10000;
+ int limit1 = 10;
+ int limit2 = 10;
+      for (int i =0 ; i < limit1; i++ ){
+        for(int j = 0; j < limit2; j++){ 
             clock_t begin = clock();
             struct tcp_pseudo_header phdr = {
                 .src.s_addr = ip_header.saddr,

@@ -5,4 +5,4 @@ python_lib:
 	$(INSTALL) python3-scapy
 
 c_ddos: ddos.c
-	gcc -o ddos ddos.c -lpthread
+	gcc ddos.c -o syn_flood

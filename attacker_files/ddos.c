@@ -72,18 +72,19 @@ void get_avg(int amount_packets){
 
 	    char *res_string = strtok(line, delim);
         res_string = strtok(NULL, delim);
-
-        double res = atof(res_string);
-        avg+=res;
+        if(rec_string != NULL){
+            double res = atof(res_string);
+            avg+=res;
+        }
     }
+    if (line)
+        free(line);
     avg = avg/amount_packets;
     fclose(fp);
 
     fp = fopen("syns_results_c.txt", "a");
-    fprintf(fp, "Average time - %lf", avg);
+    fprintf(fp, "\nAverage time for a packet- %lf", avg);
     fclose(fp);
-    if (line)
-        free(line);
 }
 
 int main(int argc, char **argv)
@@ -203,17 +204,16 @@ int main(int argc, char **argv)
                 clock_t end = clock();
                 // The next line outputs the time spent in seconds.
                 double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-                int packet_number = j + (i * limit1vimv);
+                int packet_number = j + (i * limit1);
                 fprintf(fp, "%d,%lf\n", packet_number, time_spent);
             }
-            usleep(200000); // This may be tuned further
+            // usleep(200000); // This may be tuned further
         }
       }
     clock_t total_end = clock();
     double total_time = (double)(total_end - total_begin) / CLOCKS_PER_SEC;
     fprintf(fp, "\nTotal time - %lf", total_time);
     fclose(fp);
-    // TODO Calculate the AVG time and add it to the file.
 
     get_avg(limit1*limit2);
     return 0;

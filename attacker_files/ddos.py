@@ -4,7 +4,7 @@ from scapy.all import *
 from random import randint
 import time
 from scapy.layers.inet import TCP, IP
-
+from datetime import datetime
 
 def randomIP():
     ip = ".".join(map(str, (randint(0, 255) for _ in range(4))))
@@ -13,7 +13,6 @@ def randomIP():
 
 def my_ip():
     ip = get_if_addr(conf.iface)
-    ip = get_if_addr("eth0")
     return ip
 
 
@@ -57,6 +56,10 @@ def SYN_Flood(dstIP, dstPort, counter):
     with open('syns_results_p.txt', 'a') as f:
         f.write(f'\nTotal time - {attack_time}')
         f.write(f'\nAverage time - {avg_time}')
+        now = datetime.now()
+        current_time = now.strftime("%H:%M:%S")
+
+        f.write(f'\nFinishing time: {current_time}')
     print(f"\nTotal packets sent: {total}\n")
 
 

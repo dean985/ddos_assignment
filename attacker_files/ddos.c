@@ -11,10 +11,6 @@
 #include <time.h>
 #include <unistd.h>
 
-/*
- * The pseudo header that is used in checksum calculations.
- * From http://www.enderunix.org/docs/en/rawipspoof/.
- */
 struct tcp_pseudo_header {
     struct in_addr src;
     struct in_addr dst;
@@ -24,11 +20,6 @@ struct tcp_pseudo_header {
     struct tcphdr tcp;
 };
 
-/*
- * Calculate the Internet checksum, as described in RFC1071.
- * The implementation is from: http://www.enderunix.org/docs/en/rawipspoof/
- * TODO: Understand the algorithm and rewrite it.
- */
 uint16_t inet_checksum(uint16_t *addr, int len)
 {
     int nleft = len;
@@ -72,7 +63,7 @@ void get_avg(int amount_packets){
 
 	    char *res_string = strtok(line, delim);
         res_string = strtok(NULL, delim);
-        if(rec_string != NULL){
+        if(res_string != NULL){
             double res = atof(res_string);
             avg+=res;
         }
@@ -108,15 +99,6 @@ int main(int argc, char **argv)
      * Prepare the IP header.
      */
     struct iphdr ip_header = {
-        /*
-         * The Internet Header Length (IHL) field has 4 bits, which is the
-         * number of 32-bit words. Since an IPv4 header may contain a
-         * variable number of options, this field specifies the size of the
-         * header (this also coincides with the offset to the data). The
-         * minimum value for this field is 5,[22] which indicates a length
-         * of 5 × 32 bits = 160 bits = 20 bytes.
-         * https://en.wikipedia.org/wiki/IPv4#IHL
-         */
         .ihl = 5,
         .version = 4,
         .tos = 0,
@@ -141,9 +123,7 @@ int main(int argc, char **argv)
         fprintf(stderr, "Destination port invalid: %s\n", argv[2]);
         return 1;
     }
-    /*
-     * Prepare the TCP header.
-     */
+    
     struct tcphdr tcp_header = {
         .source = 0, // Filled later
         .dest = htons(dport),
@@ -207,12 +187,15 @@ int main(int argc, char **argv)
                 int packet_number = j + (i * limit1);
                 fprintf(fp, "%d,%lf\n", packet_number, time_spent);
             }
-            // usleep(200000); // This may be tuned further
         }
       }
     clock_t total_end = clock();
     double total_time = (double)(total_end - total_begin) / CLOCKS_PER_SEC;
     fprintf(fp, "\nTotal time - %lf", total_time);
+    time_t mytime = time(NULL);
+    char * time_str = ctime(&mytime);
+    time_str[strlen(time_str)-1] = '\0';
+    fprintf(fp,"\nCurrent Time : %s", time_str);
     fclose(fp);
 
     get_avg(limit1*limit2);

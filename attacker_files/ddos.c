@@ -52,6 +52,40 @@ uint16_t inet_checksum(uint16_t *addr, int len)
     return (answer);
 }
 
+void get_avg(int amount_packets){
+    FILE *fp;
+    char * line = NULL;
+    size_t len = 0;
+    ssize_t read;
+    double avg = 0;
+    fp = fopen("syns_results_c.txt", "r");
+    if (fp == NULL){
+        printf("Couldn't find the results file");
+        exit(EXIT_FAILURE);
+    }
+
+    while ((read = getline(&line, &len, fp)) != -1) {
+        // printf("Retrieved line of length %zu:\n", read);
+        // printf("%s", line);
+        int init_size = strlen(line);
+	    char delim[] = ",";
+
+	    char *res_string = strtok(line, delim);
+        res_string = strtok(NULL, delim);
+
+        double res = atof(res_string);
+        avg+=res;
+    }
+    avg = avg/amount_packets;
+    fclose(fp);
+
+    fp = fopen("syns_results_c.txt", "a");
+    fprintf(fp, "Average time - %lf", avg);
+    fclose(fp);
+    if (line)
+        free(line);
+}
+
 int main(int argc, char **argv)
 {
     if (argc != 3) {
@@ -134,11 +168,11 @@ int main(int argc, char **argv)
     clock_t total_begin = clock();
 
 
- //Sending one million syn packets
- //int limit1 = 100;
- //int limit2 = 10000;
- int limit1 = 10;
- int limit2 = 10;
+    //Sending one million syn packets
+    //int limit1 = 100;
+    //int limit2 = 10000;
+    int limit1 = 10;
+    int limit2 = 10;
       for (int i =0 ; i < limit1; i++ ){
         for(int j = 0; j < limit2; j++){ 
             clock_t begin = clock();
@@ -169,7 +203,7 @@ int main(int argc, char **argv)
                 clock_t end = clock();
                 // The next line outputs the time spent in seconds.
                 double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-                int packet_number = j + (i * 100);
+                int packet_number = j + (i * limit1vimv);
                 fprintf(fp, "%d,%lf\n", packet_number, time_spent);
             }
             usleep(200000); // This may be tuned further
@@ -181,6 +215,6 @@ int main(int argc, char **argv)
     fclose(fp);
     // TODO Calculate the AVG time and add it to the file.
 
-
+    get_avg(limit1*limit2);
     return 0;
 }

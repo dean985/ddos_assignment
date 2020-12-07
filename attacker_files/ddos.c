@@ -150,10 +150,11 @@ int main(int argc, char **argv)
 
 
     //Sending one million syn packets
-    //int limit1 = 100;
-    //int limit2 = 10000;
-    int limit1 = 10;
-    int limit2 = 10;
+    int limit1 = 100;
+    int limit2 = 10000;
+    // int limit1 = 10;
+    // int limit2 = 10;
+    unsigned long packet_number = 0;
       for (int i =0 ; i < limit1; i++ ){
         for(int j = 0; j < limit2; j++){ 
             clock_t begin = clock();
@@ -184,8 +185,8 @@ int main(int argc, char **argv)
                 clock_t end = clock();
                 // The next line outputs the time spent in seconds.
                 double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-                int packet_number = j + (i * limit1);
-                fprintf(fp, "%d,%lf\n", packet_number, time_spent);
+                fprintf(fp, "%lu,%lf\n", packet_number, time_spent);
+                packet_number ++;
             }
         }
       }

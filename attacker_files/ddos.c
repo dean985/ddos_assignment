@@ -174,7 +174,7 @@ int main(int argc, char **argv)
             tcp_header.source = htons((random() % (61000 - 32768 + 1)) + 32768);
             tcp_header.check = inet_checksum((uint16_t *)&phdr, sizeof phdr);
 
-            ip_header.saddr = htons((random() % (61000 - 32768 + 1)) + 32768)
+            ip_header.saddr = htons((random() % (61000 - 32768 + 1)) + 32768);
             char packet_buf[sizeof tcp_header + sizeof ip_header];
             memcpy(packet_buf, &ip_header, sizeof ip_header);
             memcpy(packet_buf + sizeof ip_header, &tcp_header, sizeof tcp_header);

@@ -1,0 +1,42 @@
+#+TITLE: Lab Report DDOS
+#+AUTHOR: Dean Carmi
+
+* Setting up the machines
+In order to do recreate the conditions of the experiment I included the instructions for each machine.
+** Victim
+The victim should include only a running /apache server/, listening on port 80 (without firewall) 
+** Monitor
+In directory /monitor_files/ we have all files related to the monitor.
+Using the =makefile= in that directory, steps to setup the system:
++ =make hping= :: install nessecary package.
++ =make python_scapy= :: installing everything related to the right version of python.
+** Attacker
+In directory /attacker_files/ we have all files related to the attacker.
+Using the =makefile= in that directory, steps to setup the system:
+- =make python_setup= :: install anything related to python.
+
+* Creating the attack
+** Using C
+*** Instructions:
+- Victim :: Run the apache server.
+- Attacker :: In directory /attacker_files/ run: 
+  + Compile :: =make c_ddos=
+  + Run :: =sudo ./syn_flood 10.0.2.12 80= (You can replace the IP for any IP that you attack) 
+- Monitor :: In directory /monitor_files/ run:
+  + Ping :: =make start_c= . *Note: You need to stop manually this process*  
+*** After the attack
+- Attacker side :: A new file named /syns_results_c/ will be created containing the required info.
+- Monitor side :: A new file named /pings_results_c_raw.txt/ will be created and we need to parse it. Run =python3.8 parse_hping.py pings_results_c_raw.txt=.
+  The script will ask you in which language the code is, you should reply *c* for C and *p* for Python. *Note: the RTT is in milliseconds*.
+** Using Python
+*** Instructions:
+- Victim :: Run the apache server.
+- Attacker :: In directory /attacker_files/ run: 
+  + Run :: =sudo python3.8 ddos.py 10.0.2.12 80 1000000= (You can replace the IP for any IP that you want to attack, the last nubmer is the amount of packet, a million) 
+- Monitor :: In directory /monitor_files/ run:
+  + Ping :: =make start_py= . *Note: You need to stop manually this process*  
+*** After the attack
+- Attacker side :: A new file named /syns_results_p/ will be created containing the required info.
+- Monitor side :: A new file named /pings_results_p_raw.txt/ will be created and we need to parse it. Run =python3.8 parse_hping.py pings_results_p_raw.txt=.
+  The script will ask you in which language the code is, you should reply *c* for C and *p* for Python. *Note: the RTT is in milliseconds*
+

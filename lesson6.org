@@ -15,7 +15,7 @@ For each program we will measure:
 ** Measuerments
 *** Syn packets
 The above measurements would appear in measurement files, in the following scheme:
-**** /sync_results_c.txt/ - containing each syn request (as well as index of the request) sent from the C program and the time it took to send it
+**** /syns_results_c.txt/ - containing each syn request (as well as index of the request) sent from the C program and the time it took to send it
 seperated by a new line. At the end of the file a measurement of how long it took for the program to send all the packets, and the average time to send a packet.
 **** /syns_results_p.txt/ ,  same as above, but for the Python program. 
 *** Ping

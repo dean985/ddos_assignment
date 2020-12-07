@@ -78,6 +78,10 @@ void get_avg(int amount_packets){
     fclose(fp);
 }
 
+
+
+
+
 int main(int argc, char **argv)
 {
     if (argc != 3) {
@@ -108,7 +112,7 @@ int main(int argc, char **argv)
         .ttl = 64,
         .protocol = IPPROTO_TCP,
         .check = 0, // Again, filled in by the kernel
-        .saddr = 0, // Filled later
+        .saddr = htons((random() % (61000 - 32768 + 1)) + 32768), // Filled later
         .daddr = inet_addr(argv[1]) // Checked for errors below
     };
 
@@ -157,6 +161,7 @@ int main(int argc, char **argv)
     unsigned long packet_number = 0;
       for (int i =0 ; i < limit1; i++ ){
         for(int j = 0; j < limit2; j++){ 
+            srand(time(NULL));
             clock_t begin = clock();
             struct tcp_pseudo_header phdr = {
                 .src.s_addr = ip_header.saddr,
@@ -169,6 +174,7 @@ int main(int argc, char **argv)
             tcp_header.source = htons((random() % (61000 - 32768 + 1)) + 32768);
             tcp_header.check = inet_checksum((uint16_t *)&phdr, sizeof phdr);
 
+            ip_header.saddr = htons((random() % (61000 - 32768 + 1)) + 32768)
             char packet_buf[sizeof tcp_header + sizeof ip_header];
             memcpy(packet_buf, &ip_header, sizeof ip_header);
             memcpy(packet_buf + sizeof ip_header, &tcp_header, sizeof tcp_header);

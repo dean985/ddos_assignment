@@ -11,11 +11,6 @@ def randomIP():
     return ip
 
 
-def my_ip():
-    ip = get_if_addr(conf.iface)
-    return ip
-
-
 def randInt():
     x = randint(1000, 9000)
     return x

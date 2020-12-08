@@ -17,26 +17,62 @@ Using the =makefile= in that directory, steps to setup the system:
 
 * Creating the attack
 ** Using C
-*** Instructions:
+ Instructions:
 - Victim :: Run the apache server.
-- Attacker :: In directory /attacker_files/ run: 
-  + Compile :: =make c_ddos=
-  + Run :: =sudo ./syn_flood 10.0.2.12 80= (You can replace the IP for any IP that you attack) 
-- Monitor :: In directory /monitor_files/ run:
-  + Ping :: =make start_c= . *Note: You need to stop manually this process*  
+- Attacker :: In directory =attacker_files= run: 
+  + Compile - =make c_ddos=
+  + Run - =sudo ./syn_flood 10.0.2.12 80= (You can replace the IP for any IP that you attack) 
+- Monitor :: In directory =monitor_files= run:
+  + Ping - =make start_c= . *Note: You need to stop manually this process*  
 *** After the attack
-- Attacker side :: A new file named /syns_results_c/ will be created containing the required info.
-- Monitor side :: A new file named /pings_results_c_raw.txt/ will be created and we need to parse it. Run =python3.8 parse_hping.py pings_results_c_raw.txt=.
+- Attacker side :: A new file named =syns_results_c= will be created containing the required info.
+- Monitor side :: A new file named =pings_results_c_raw.txt= will be created and we need to parse it. Run =python3.8 parse_hping.py pings_results_c_raw.txt=.
   The script will ask you in which language the code is, you should reply *c* for C and *p* for Python. *Note: the RTT is in milliseconds*.
 ** Using Python
-*** Instructions:
+ Instructions:
 - Victim :: Run the apache server.
-- Attacker :: In directory /attacker_files/ run: 
-  + Run :: =sudo python3.8 ddos.py 10.0.2.12 80 1000000= (You can replace the IP for any IP that you want to attack, the last nubmer is the amount of packet, a million) 
+- Attacker :: In directory =attacker_files= run: 
+  + Run - =sudo python3.8 ddos.py 10.0.2.12 80 1000000= (You can replace the IP for any IP that you want to attack, the last nubmer is the amount of packet, a million) 
 - Monitor :: In directory /monitor_files/ run:
-  + Ping :: =make start_py= . *Note: You need to stop manually this process*  
+  + Ping - =make start_py= . *Note: You need to stop manually this process*  
 *** After the attack
-- Attacker side :: A new file named /syns_results_p/ will be created containing the required info.
-- Monitor side :: A new file named /pings_results_p_raw.txt/ will be created and we need to parse it. Run =python3.8 parse_hping.py pings_results_p_raw.txt=.
+- Attacker side :: A new file named =syns_results_p= will be created containing the required info.
+- Monitor side :: A new file named =pings_results_p_raw.txt= will be created and we need to parse it. Run =python3.8 parse_hping.py pings_results_p_raw.txt=.
   The script will ask you in which language the code is, you should reply *c* for C and *p* for Python. *Note: the RTT is in milliseconds*
+* Report
+** Regarding /syns results/
+- C code ::
+#+CAPTION: Results of syn packet sending with C
+[[file:results/Syn_pkts_c.png]]
+ - Average time for a packet - 0.000036 seconds.
+ - Total running time - 52.894455 seconds.
+ - Standard deviation - 0.0000315946680146141
 
+
+- Python code ::
+#+CAPTION: Results of syn packet sending with Python
+[[file:results/Syn_pkts_p.png]]
+- Average time for a packet ::  0.002151517 seconds.
+- Total running time :: 2515.619506395 seconds.
+- Standard deviation :: 0.0004762834996620782
+*** Explaination
+We can observe two differences:
+- Attack Time - C took 52 seconds vs Python that took 2515 seconds. C was faster by a factor of 48.
+- Average time for a packet - C took 0.000036 seconds vs Python that took 0.00215 seconds. Python was slower by a factor of 59.
+We know that because Python is an interpreted language, it amplifies the number of actual CPU instructions required to perform the code given (compared to code in C).
+In addition, In my case the Python code didn't run as machine code (like the C code), but it ran in a virtual machine (the bytecode interpreter).
+** Regarding the /pings results/
+- C code ::
+#+CAPTION: Results of the pings sending when the C attack took place
+[[file:~/Documents/cyber-attack/ddos_assignment/results/Pings_c.png]]
+  | Average RTT        | 4.378472 milliseconds |
+  | Standart deviation |             2.6498208 |
+
+- Python code ::
+#+CAPTION: Results of the pings sending when the Python attack took place
+[[file:~/Documents/cyber-attack/ddos_assignment/results/Pings_p.png]]
+| Average RTT        | 9.39337423 milliseconds |
+| Standard deviation |             69.80985083 |
+*** Explaination
+- Average RTT
+  

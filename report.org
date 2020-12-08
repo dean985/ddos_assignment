@@ -6,12 +6,12 @@ In order to do recreate the conditions of the experiment I included the instruct
 ** Victim
 The victim should include only a running /apache server/, listening on port 80 (without firewall) 
 ** Monitor
-In directory /monitor_files/ we have all files related to the monitor.
+In directory =monitor_files= we have all files related to the monitor.
 Using the =makefile= in that directory, steps to setup the system:
 + =make hping= :: install nessecary package.
 + =make python_scapy= :: installing everything related to the right version of python.
 ** Attacker
-In directory /attacker_files/ we have all files related to the attacker.
+In directory =attacker_files= we have all files related to the attacker.
 Using the =makefile= in that directory, steps to setup the system:
 - =make python_setup= :: install anything related to python.
 
@@ -74,5 +74,6 @@ In addition, In my case the Python code didn't run as machine code (like the C c
 | Average RTT        | 9.39337423 milliseconds |
 | Standard deviation |             69.80985083 |
 *** Explaination
-- Average RTT
-  
+We can see the consequences of the attack on both attacks. The RTT rate of growth is increasing all the way through.
+We can also see the the average RTT on the C code is faster approximately by a factor of 2.
+The standart deviation of the Python code is high compared to the C code.

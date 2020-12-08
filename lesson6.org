@@ -58,10 +58,8 @@ All files will be uploaded to ~204652_measuere.zip~ which will include:
      - ~syns_results_c.txt~
      - ~pings_results_c.txt~
 
-* My progression
-- [ ] Task one - Attacker ::  edit the python code and the C code to measure the time it takes to send a packet.
-- [ ] Task two - Monitor ::  
+* TODO My progression
 - [ ] Task three - Victim :: install apache server (No protections). 
+- [ ] Task  :: 
   
 * Before submitting
-- [ ] delete all chinese words from the C file 
